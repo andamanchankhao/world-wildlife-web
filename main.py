@@ -19,7 +19,7 @@ prompt = """
 """
 
 # เรียกใช้โมเดล Gemini 1.5 Flash
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 response = model.generate_content(prompt)
 news_summary = response.text
 
