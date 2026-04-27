@@ -1,30 +1,29 @@
 import os
 import requests
 import datetime
-from anthropic import Anthropic
+import google.generativeai as genai
 
-# 1. ตั้งค่าต่างๆ
-anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+# 1. ตั้งค่าตัวแปร
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
 line_token = os.environ.get("LINE_CHANNEL_TOKEN")
 line_user_id = os.environ.get("LINE_USER_ID")
 
-client = Anthropic(api_key=anthropic_api_key)
+# ตั้งค่า Gemini
+genai.configure(api_key=gemini_api_key)
 today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-# 2. สั่งให้ Claude สรุปข่าว
+# 2. สั่งให้ Gemini สรุปข่าว
 prompt = """
 ช่วยสรุปข่าวอัปเดตเกี่ยวกับ สัตว์ป่า ที่สำคัญทั่วโลก 5 ข่าวล่าสุดให้หน่อย
 ขอแบบอ่านง่าย สรุปกระชับ พร้อมระบุแหล่งอ้างอิงท้ายข่าว
 """
 
-response = client.messages.create(
-    model="claude-3-5-sonnet-20241022",
-    max_tokens=1000,
-    messages=[{"role": "user", "content": prompt}]
-)
-news_summary = response.content[0].text
+# เรียกใช้โมเดล Gemini 1.5 Flash
+model = genai.GenerativeModel('gemini-1.5-flash')
+response = model.generate_content(prompt)
+news_summary = response.text
 
-# 3. บันทึกผลลัพธ์เก็บไว้ใน GitHub (สร้างไฟล์ .md)
+# 3. บันทึกผลลัพธ์ลงไฟล์ .md
 file_name = f"news_{today_str}.md"
 with open(file_name, "w", encoding="utf-8") as f:
     f.write(news_summary)
