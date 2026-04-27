@@ -1,4 +1,4 @@
-name: AI News Routine
+name: "Wildlife News Routine
 
 on:
   schedule:
