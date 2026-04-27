@@ -2,15 +2,18 @@ name: AI News Routine
 
 on:
   schedule:
-    # ตั้งเวลา 00:00 UTC ซึ่งจะตรงกับ 07:00 น. ตามเวลาประเทศไทย
     - cron: '0 0 * * *'
-  workflow_dispatch: # ปุ่มสำหรับกดรันเทสต์เองแบบ Manual
+  workflow_dispatch:
+
+# เพิ่มบรรทัดนี้เพื่อแก้แจ้งเตือน Node.js 20
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   run-routine:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # อนุญาตให้เขียนไฟล์กลับลง Repo
+      contents: write
 
     steps:
       - name: Checkout Repository
