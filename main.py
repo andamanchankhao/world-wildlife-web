@@ -57,7 +57,7 @@ headers = {
 }
 payload = {
     "to": line_user_id,
-    "messages": [{"type": "text", "text": f"📰 สรุปข่าว AI ประจำวันที่ {today_str}\n\n{news_summary}"}]
+    "messages": [{"type": "text", "text": f"📰 สรุปข่าว สัตว์ป่า ประจำวันที่ {today_str}\n\n{news_summary}"}]
 }
 
 try:
