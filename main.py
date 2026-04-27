@@ -13,34 +13,36 @@ line_user_id = os.environ.get("LINE_USER_ID")
 client = genai.Client(api_key=gemini_api_key)
 today_str = datetime.datetime.now().strftime("%Y-%m-%d")
 
-# 2. สั่งให้ Gemini สรุปข่าว (พร้อมระบบ Retry ป้องกันเซิร์ฟเวอร์ยุ่ง)
+# 2. สั่งให้ Gemini สรุปข่าว (แบบตื้อจนกว่าจะได้)
 prompt = """
 ช่วยสรุปข่าวอัปเดตเกี่ยวกับ AI ที่สำคัญ 5 ข่าวล่าสุดให้หน่อย
 ขอแบบอ่านง่าย สรุปกระชับ พร้อมระบุแหล่งอ้างอิงท้ายข่าว
 """
 
-max_retries = 3
 news_summary = ""
+attempt = 1
 
-for attempt in range(max_retries):
+print("เริ่มการทำงานของ Routine...")
+
+while True:
     try:
-        print(f"กำลังเรียกใช้ Gemini... (รอบที่ {attempt + 1}/{max_retries})")
+        print(f"กำลังพยายามดึงข้อมูลจาก Gemini... (ครั้งที่ {attempt})")
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
         )
         news_summary = response.text
-        print("สรุปข่าวสำเร็จ!")
-        break # สำเร็จแล้วออกจาก Loop เลย
         
-    except errors.ServerError as e:
-        print("เซิร์ฟเวอร์ Google กำลังยุ่ง รอ 10 วินาทีแล้วลองใหม่...")
-        time.sleep(10)
-        if attempt == max_retries - 1:
-            news_summary = "ขออภัยครับ วันนี้ระบบ AI ของ Google มีผู้ใช้งานหนาแน่นมาก ทำให้ไม่สามารถสรุปข่าวอัตโนมัติได้ครับ 😅"
-    except Exception as e:
-        news_summary = f"เกิดข้อผิดพลาดในการดึงข้อมูล: {str(e)}"
-        break
+        if news_summary:
+            print("🎉 สำเร็จ! ได้รับข้อมูลสรุปข่าวแล้ว")
+            break # ถ้าได้ข้อมูลแล้ว ให้หลุดออกจาก Loop ทันที
+            
+    except (errors.ServerError, Exception) as e:
+        # ถ้าเป็น ServerError (503) หรือ Error อื่นๆ ให้รอแล้วลองใหม่
+        print(f"⚠️ พบปัญหา: {str(e)}")
+        print("เซิร์ฟเวอร์อาจจะยุ่งหรือขัดข้อง จะรอ 60 วินาทีแล้วลองใหม่นะครับ...")
+        time.sleep(60) # รอ 1 นาที
+        attempt += 1
 
 # 3. บันทึกผลลัพธ์ลงไฟล์ .md
 file_name = f"news_{today_str}.md"
@@ -58,5 +60,8 @@ payload = {
     "messages": [{"type": "text", "text": f"📰 สรุปข่าว AI ประจำวันที่ {today_str}\n\n{news_summary}"}]
 }
 
-res = requests.post(line_url, headers=headers, json=payload)
-print("LINE API Status:", res.status_code)
+try:
+    res = requests.post(line_url, headers=headers, json=payload)
+    print("LINE API Status:", res.status_code)
+except Exception as e:
+    print(f"ส่ง LINE ไม่สำเร็จ: {str(e)}")
