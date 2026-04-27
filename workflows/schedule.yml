@@ -1,0 +1,41 @@
+name: AI News Routine
+
+on:
+  schedule:
+    # ตั้งเวลา 00:00 UTC ซึ่งจะตรงกับ 07:00 น. ตามเวลาประเทศไทย
+    - cron: '0 0 * * *'
+  workflow_dispatch: # ปุ่มสำหรับกดรันเทสต์เองแบบ Manual
+
+jobs:
+  run-routine:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # อนุญาตให้เขียนไฟล์กลับลง Repo
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install anthropic requests
+
+      - name: Run Script & Send to LINE
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LINE_CHANNEL_TOKEN: ${{ secrets.LINE_CHANNEL_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: python main.py
+
+      - name: Commit and Push (Save to GitHub)
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add *.md
+          git commit -m "Add news summary for $(date +'%Y-%m-%d')" || exit 0
+          git push
