@@ -1,4 +1,4 @@
-name: "Wildlife News Routine
+name: "Wildlife News Routine"
 
 on:
   schedule:
